@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, Component, ReactNode } from "react";
 import { ArrowLeft, Maximize2, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ChatInterface from "./ChatInterface";
@@ -6,6 +6,34 @@ import AvatarGuide from "./AvatarGuide";
 import StreetViewEmbed from "./StreetViewEmbed";
 import LocationMenu from "./LocationMenu";
 import { CAMPUS_LOCATIONS, CampusLocation } from "@/data/campusLocations";
+
+// Error Boundary to prevent a crash from blanking the whole page
+class ChatErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full gap-4 p-8 text-center text-muted-foreground">
+          <span className="text-4xl">🤖</span>
+          <p className="text-sm">Scout ran into a hiccup. Please refresh the page.</p>
+          <button
+            className="text-xs px-3 py-1.5 rounded-md bg-primary text-primary-foreground"
+            onClick={() => this.setState({ hasError: false })}
+          >
+            Retry
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 interface TourLayoutProps {
   onBack: () => void;
@@ -88,13 +116,15 @@ const TourLayout = ({ onBack }: TourLayoutProps) => {
         <div className="hidden md:flex items-center gap-3 p-4 border-b border-border">
           <AvatarGuide state="idle" size="sm" />
           <div>
-            <h3 className="font-display font-semibold">Campus Guide</h3>
+            <h3 className="font-display font-semibold">Scout — Campus Guide</h3>
             <p className="text-xs text-muted-foreground">Always here to help</p>
           </div>
         </div>
 
         <div className="h-[calc(100%-3rem)] md:h-[calc(100vh-5rem)]">
-          <ChatInterface onLocationChange={handleLocationChange} />
+          <ChatErrorBoundary>
+            <ChatInterface onLocationChange={handleLocationChange} />
+          </ChatErrorBoundary>
         </div>
       </div>
     </div>
